@@ -16,7 +16,7 @@ export default function PrivacyPage() {
         >
           Privacy Policy
         </h1>
-        <p className="text-white/40 text-sm mb-12">Last updated: March 5, 2026</p>
+        <p className="text-white/40 text-sm mb-12">Last updated: May 26, 2026</p>
 
         <Section title="Overview">
           Safar (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) is a travel tracking and
@@ -43,9 +43,21 @@ export default function PrivacyPage() {
             We store follows, likes, and comments you create. Trip posts generated when you mark a
             city as visited are visible to your followers.
           </SubSection>
+          <SubSection title="Phone Number">
+            You may optionally provide your phone number to help others find you via the &ldquo;Find
+            Friends&rdquo; feature. We store a hashed version of your number for matching and, if
+            provided, the number itself on your profile. Your phone number is never shared with other
+            users or third parties beyond what is described in this policy.
+          </SubSection>
+          <SubSection title="Contacts (optional)">
+            With your permission, we read phone numbers from your device contacts to identify which
+            of your contacts are also on Safar. Phone numbers are hashed on your device before being
+            sent to our servers; raw contact data is never transmitted or stored. You can revoke this
+            permission at any time in your device Settings.
+          </SubSection>
           <SubSection title="Usage Data">
-            We may collect basic app usage information (e.g., crash logs) to improve the app. We do
-            not sell this data.
+            We may collect basic app usage information (e.g., crash logs, session replays) to
+            improve the app. Text inputs are masked in session recordings. We do not sell this data.
           </SubSection>
         </Section>
 
@@ -74,6 +86,20 @@ export default function PrivacyPage() {
             <li>
               <strong className="text-white">Apple</strong> — if you use Sign in with Apple, Apple
               processes your authentication.
+            </li>
+            <li>
+              <strong className="text-white">PostHog</strong> — we use PostHog for product analytics
+              and session replay to understand how the app is used and fix issues. Text inputs are
+              masked in all recordings. See{" "}
+              <a
+                href="https://posthog.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-white/80 hover:text-white"
+              >
+                PostHog&apos;s privacy policy
+              </a>
+              .
             </li>
           </ul>
           <p className="mt-4 text-white/70">
