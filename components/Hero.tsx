@@ -14,7 +14,7 @@ export default function Hero() {
         {/* Left — text */}
         <div>
           <p className="text-accent text-xs font-semibold tracking-[0.25em] uppercase mb-6">
-            Available on iOS
+            Coming soon to iOS
           </p>
           <h1
             className="font-headline font-extrabold uppercase leading-[0.9] tracking-tight text-dark mb-6"
@@ -32,12 +32,10 @@ export default function Hero() {
           </p>
           <div className="flex lg:justify-start justify-center">
             <a
-              href="https://apps.apple.com/app/id6759003685"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#waitlist"
               className="inline-flex items-center gap-2 bg-accent text-white font-medium px-7 py-3.5 rounded-full hover:bg-dark transition-colors text-sm"
             >
-              Download on the App Store →
+              Join the Waitlist →
             </a>
           </div>
         </div>
