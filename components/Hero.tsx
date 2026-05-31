@@ -20,15 +20,14 @@ export default function Hero() {
             className="font-headline font-extrabold uppercase leading-[0.9] tracking-tight text-dark mb-6"
             style={{ fontSize: "clamp(3.5rem, 8vw, 6.5rem)" }}
           >
-            The world,
+            Travel is
             <br />
-            ranked by
+            built on
             <br />
-            people who go.
+            trust.
           </h1>
           <p className="text-dark/60 text-lg leading-relaxed mb-8 max-w-md font-sans">
-            Track every city you visit. Rate them against each other. See where
-            the world&apos;s best travelers have been.
+            <strong>Safar</strong> is built for that reality. Instead of seeing thousands of people&apos;s opinions, only see the ones whose taste you trust.
           </p>
           <div className="flex lg:justify-start justify-center">
             <a
@@ -46,7 +45,7 @@ export default function Hero() {
             className="relative rounded-[44px] border-[7px] border-dark shadow-2xl -rotate-3 overflow-hidden"
             style={{ width: "260px", background: "#1a1a1a" }}
           >
-            <img src="/screenshots/leaderboard.png" alt="Safar app" className="w-full block" />
+            <img src="/screenshots/newleaderboard.png" alt="Safar app" className="w-full block" />
           </div>
         </div>
       </div>

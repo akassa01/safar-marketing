@@ -1,24 +1,24 @@
 const features = [
   {
     number: "01",
-    title: "Smart Ratings",
+    title: "City Deep Dives",
     description:
-      "Not a star slider. Compare cities head-to-head and build a ranked list that actually means something. Unlocks after 5 cities.",
-    image: "/screenshots/citylist.png",
+      "Say goodbye to fragmented notes, lists, and Google Docs. See what your friends did, log the spots you love, and leave notes for future you.",
+    image: "/screenshots/citydetail.png",
   },
   {
     number: "02",
     title: "Your Map",
     description:
       "Every city you've visited or want to visit, pinned on an interactive world map. Track cities, countries, and continents at a glance.",
-    image: "/screenshots/homeview.png",
+    image: "/screenshots/newhome.png",
   },
   {
     number: "03",
     title: "Community",
     description:
-      "See the world's top-rated cities and countries by the community. Follow travelers, share trips, and discover where the well-traveled go.",
-    image: "/screenshots/feedview.png",
+      "Follow travellers whose taste you actually trust. See where they've been, what they loved, and let their trips inform yours.",
+    image: "/screenshots/newfeed.png",
   },
 ];
 

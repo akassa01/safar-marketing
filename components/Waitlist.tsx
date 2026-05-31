@@ -53,13 +53,12 @@ export default function Waitlist() {
           Waitlist.
         </h2>
         <p className="text-white/50 text-base font-sans mb-10 leading-relaxed">
-          Start tracking every city you visit. Rate them, map them, and see
-          where the world&apos;s best travelers have been.
+          Never lose track of a recommendation again. Be part of the social travel journal built on trust.
         </p>
 
         {status === "success" && (
           <p className="text-white font-medium text-lg">
-            🎉 You&apos;re on the list! We&apos;ll let you know when Safar launches.
+            You&apos;re on the list! We&apos;ll keep you in the loop as we work towards launch.
           </p>
         )}
 
