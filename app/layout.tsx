@@ -16,9 +16,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Safar — Track, Rate & Discover Cities",
+  title: "Safar — The Social Travel Journal",
   description:
-    "Track every city you visit. Rate them against each other. See where the world's best travelers have been.",
+    "Track every city you visit, log the places you love, and see recommendations from travelers you actually trust.",
 };
 
 export default function RootLayout({
