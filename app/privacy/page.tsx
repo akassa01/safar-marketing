@@ -16,7 +16,7 @@ export default function PrivacyPage() {
         >
           Privacy Policy
         </h1>
-        <p className="text-white/40 text-sm mb-12">Last updated: May 26, 2026</p>
+        <p className="text-white/40 text-sm mb-12">Last updated: June 6, 2026</p>
 
         <Section title="Overview">
           Safar (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) is a travel tracking and
@@ -28,7 +28,10 @@ export default function PrivacyPage() {
           <SubSection title="Account Information">
             When you create an account we collect your name, email address, and a username you
             choose. If you sign in with Apple, Apple may provide a private relay email address
-            instead of your real one.
+            instead of your real one. We also store a hashed (irreversible) version of your email
+            address so that people who already have your email saved in their contacts can find you
+            through the &ldquo;Find Friends&rdquo; feature. This hash is used only for matching and
+            is never shown to other users.
           </SubSection>
           <SubSection title="Profile Data">
             You may optionally add a profile photo and bio. This information is visible to other
@@ -50,10 +53,11 @@ export default function PrivacyPage() {
             users or third parties beyond what is described in this policy.
           </SubSection>
           <SubSection title="Contacts (optional)">
-            With your permission, we read phone numbers from your device contacts to identify which
-            of your contacts are also on Safar. Phone numbers are hashed on your device before being
-            sent to our servers; raw contact data is never transmitted or stored. You can revoke this
-            permission at any time in your device Settings.
+            With your permission, we read phone numbers and email addresses from your device contacts
+            to identify which of your contacts are also on Safar. These phone numbers and email
+            addresses are hashed on your device before being sent to our servers; raw contact data is
+            never transmitted or stored. You can revoke this permission at any time in your device
+            Settings.
           </SubSection>
           <SubSection title="Usage Data">
             We may collect basic app usage information (e.g., crash logs, session replays) to
@@ -103,7 +107,13 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p className="mt-4 text-white/70">
-            We do not share your data with advertisers or data brokers.
+            We may share aggregated or de-identified information &mdash; data that has been combined
+            or stripped of identifiers so that it cannot reasonably be used to identify you &mdash;
+            with partners or for research, analytics, and business purposes. This never includes your
+            contact data or the hashed phone numbers and email addresses used for friend matching.
+          </p>
+          <p className="mt-4 text-white/70">
+            We do not sell or share your personal information with advertisers or data brokers.
           </p>
         </Section>
 
