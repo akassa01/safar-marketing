@@ -1,13 +1,51 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getSharedTrip } from "@/lib/sharedTrip";
 
 const APP_STORE_URL = "https://apps.apple.com/app/id6759003685";
 
-export const metadata: Metadata = {
-  title: "A trip on Safar",
-  description: "See this city and the places worth visiting on Safar — the social travel journal.",
-};
+// Per-city OG title/description so link unfurls match the generated image.
+// The sibling `opengraph-image.tsx` route supplies the picture; this only sets
+// text. Both degrade to the same generic Safar copy when data is unavailable —
+// never an error.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ userId: string; cityId: string }>;
+}): Promise<Metadata> {
+  const { userId, cityId } = await params;
+
+  let trip = null;
+  try {
+    trip = await getSharedTrip(userId, cityId);
+  } catch {
+    trip = null;
+  }
+
+  if (!trip) {
+    return {
+      title: "A trip on Safar",
+      description:
+        "See this city and the places worth visiting on Safar — the social travel journal.",
+    };
+  }
+
+  const place = [trip.cityName, trip.country].filter(Boolean).join(", ");
+  const title = trip.sharerName
+    ? `See ${trip.sharerName}'s trip to ${trip.cityName} on Safar`
+    : `See ${trip.cityName} on Safar`;
+  const description = trip.sharerName
+    ? `${trip.sharerName} shared their trip to ${place} on Safar — the social travel journal. Get the app to see the places they loved.`
+    : `Explore ${place} on Safar — the social travel journal. Get the app to see the places worth visiting.`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 // Fallback landing page for shared-city links. Users with the Safar app installed
 // never reach this — iOS opens the app via the Universal Link (see the AASA file at
