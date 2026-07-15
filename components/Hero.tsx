@@ -1,3 +1,5 @@
+import { APP_STORE_URL } from "@/lib/appStore";
+
 export default function Hero() {
   return (
     <section className="relative min-h-screen flex items-center bg-background overflow-hidden pt-16">
@@ -14,7 +16,7 @@ export default function Hero() {
         {/* Left — text */}
         <div>
           <p className="text-accent text-xs font-semibold tracking-[0.25em] uppercase mb-6">
-            Coming soon to iOS
+            Available now on iOS
           </p>
           <h1
             className="font-headline font-extrabold uppercase leading-[0.9] tracking-tight text-dark mb-6"
@@ -31,10 +33,10 @@ export default function Hero() {
           </p>
           <div className="flex lg:justify-start justify-center">
             <a
-              href="#waitlist"
+              href={APP_STORE_URL}
               className="inline-flex items-center gap-2 bg-accent text-white font-medium px-7 py-3.5 rounded-full hover:bg-dark transition-colors text-sm"
             >
-              Join the Waitlist →
+              Download Now →
             </a>
           </div>
         </div>

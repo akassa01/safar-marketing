@@ -2,8 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getSharedTrip } from "@/lib/sharedTrip";
-
-const APP_STORE_URL = "https://apps.apple.com/app/id6759003685";
+import { APP_STORE_URL } from "@/lib/appStore";
 
 // Per-city OG title/description so link unfurls match the generated image.
 // The sibling `opengraph-image.tsx` route supplies the picture; this only sets

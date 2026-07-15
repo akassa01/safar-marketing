@@ -1,7 +1,7 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
-import Waitlist from "@/components/Waitlist";
+import Download from "@/components/Download";
 import Footer from "@/components/Footer";
 
 export default function Page() {
@@ -11,7 +11,7 @@ export default function Page() {
       <main>
         <Hero />
         <Features />
-        <Waitlist />
+        <Download />
       </main>
       <Footer />
     </>
