@@ -42,3 +42,42 @@ export async function rest<T = Record<string, unknown>>(
     return null;
   }
 }
+
+export type RpcResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; status: number; code: string | null };
+
+/**
+ * Calls an anon-callable Postgres function. Never cached, because callers
+ * read state an owner can change (a closed link) or write data.
+ */
+export async function rpc<T = unknown>(
+  name: string,
+  body: Record<string, unknown>,
+): Promise<RpcResult<T>> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      let code: string | null = null;
+      try {
+        const err = (await res.json()) as { code?: unknown };
+        if (typeof err.code === "string") code = err.code;
+      } catch {
+        // Non-JSON error body; the status is enough.
+      }
+      return { ok: false, status: res.status, code };
+    }
+    return { ok: true, data: (await res.json()) as T };
+  } catch {
+    return { ok: false, status: 0, code: null };
+  }
+}
