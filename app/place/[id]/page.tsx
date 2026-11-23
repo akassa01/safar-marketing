@@ -1,21 +1,33 @@
 import type { Metadata } from "next";
-import PlaceLanding, { placeLandingMetadata } from "../PlaceLanding";
+import PlaceCard from "@/components/place/PlaceCard";
+import { getCatalogPlace, type SharedPlace } from "@/lib/sharedPlace";
+import { placeMetadata } from "@/lib/placeMetadata";
 
-// Fallback landing for shared-place links carrying a catalog id (`getsafar.ca/place/{id}`).
-// See PlaceLanding for why app users never reach this page.
-export const metadata: Metadata = {
-  ...placeLandingMetadata,
-  openGraph: { ...placeLandingMetadata },
-  twitter: { card: "summary_large_image", ...placeLandingMetadata },
-};
+type Params = Promise<{ id: string }>;
+
+// Never throws: any failure resolves to the generic card.
+async function load(params: Params): Promise<SharedPlace | null> {
+  try {
+    return await getCatalogPlace((await params).id);
+  } catch {
+    return null;
+  }
+}
+
+// Landing for shared-place links carrying a catalog id (`getsafar.ca/place/{id}`).
+// See PlaceCard for why app users never reach this page.
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  return placeMetadata(await load(params));
+}
 
 export default async function SharedPlaceByIdPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Params;
 }) {
-  // Awaited to satisfy Next's async dynamic API contract; the id is available here if
-  // we later personalize the unfurl.
-  await params;
-  return <PlaceLanding />;
+  return <PlaceCard place={await load(params)} />;
 }
