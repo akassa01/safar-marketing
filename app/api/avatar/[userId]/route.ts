@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { SUPABASE_ANON_KEY, SUPABASE_URL, UUID_RE, rest } from "@/lib/supabaseRest";
+import { SUPABASE_ANON_KEY, SUPABASE_URL, UUID_RE, rpcGet } from "@/lib/supabaseRest";
 
 /**
  * A sharer's avatar for the city guide. The `avatars` bucket isn't public, and an
@@ -50,10 +50,9 @@ export async function GET(
   const { userId } = await params;
   if (!UUID_RE.test(userId)) return notFound();
 
-  const rows = await rest<{ avatar_url: string | null }>(
-    `profiles?id=eq.${userId}&select=avatar_url&limit=1`,
-  );
-  const stored = rows?.[0]?.avatar_url?.trim();
+  // Anon can't read profiles; this function returns only the avatar path.
+  const path = await rpcGet<string>("get_avatar_path", { p_user_id: userId });
+  const stored = typeof path === "string" ? path.trim() : "";
   const source = stored ? storageUrl(stored) : null;
   if (!source) return notFound();
 

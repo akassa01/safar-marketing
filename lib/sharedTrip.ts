@@ -2,14 +2,15 @@
  * Public data for a shared-city link (`/u/{userId}/city/{cityId}`), used by
  * the guide page, its metadata, and the OG image route.
  *
- * Reads only anon-readable, public content through `lib/supabaseRest.ts`.
- * Per-place notes are private in the app, so `user_place.note` is never
- * selected. Only the trip note on a visited city is public.
+ * Catalog data (city, photo) is read directly. Everything about the sharer
+ * comes from the `get_shared_guide` function, which returns only what this
+ * page shows. Per-place notes are private and never leave the database; only
+ * the trip note on a visited city is public.
  *
  * Every helper degrades to `null` or empty on failure so callers can render
  * a valid branded fallback.
  */
-import { UUID_RE, parseId, rest } from "@/lib/supabaseRest";
+import { UUID_RE, parseId, rest, rpcGet } from "@/lib/supabaseRest";
 import { normalizeCategory, type CategoryKey } from "@/lib/placeCategories";
 
 export interface GuidePlace {
@@ -47,6 +48,21 @@ export interface SharedTrip {
   guidePlaces: GuidePlace[];
 }
 
+/** Shape of `get_shared_guide` (supabase/migrations/20261123_shared_guide_rpc.sql). */
+interface GuideRow {
+  sharer: { username: string | null; full_name: string | null; has_avatar: boolean } | null;
+  visited: boolean;
+  trip_note: string | null;
+  places: {
+    id: number;
+    name: string | null;
+    category: string | null;
+    liked: boolean | null;
+    latitude: number | null;
+    longitude: number | null;
+  }[];
+}
+
 const isNum = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v);
 
@@ -62,62 +78,31 @@ export async function getSharedTrip(
   if (cityId === null) return null;
   const validUser = UUID_RE.test(userId);
 
-  const none = Promise.resolve(null);
-  const [cityRows, photoRows, profileRows, noteRows, placeRows] =
-    await Promise.all([
-      rest<{
-        display_name: string;
-        admin: string | null;
-        country: string | null;
-        latitude: number | null;
-        longitude: number | null;
-      }>(
-        `cities?id=eq.${cityId}&select=display_name,admin,country,latitude,longitude&limit=1`,
-      ),
-      rest<{
-        photo_url_regular: string | null;
-        photographer_name: string | null;
-        unsplash_url: string | null;
-      }>(
-        `city_photos?city_id=eq.${cityId}&select=photo_url_regular,photographer_name,unsplash_url&limit=1`,
-      ),
-      validUser
-        ? rest<{
-            username: string | null;
-            full_name: string | null;
-            avatar_url: string | null;
-          }>(
-            `profiles?id=eq.${userId}&select=username,full_name,avatar_url&limit=1`,
-          )
-        : none,
-      validUser
-        ? rest<{ notes: string | null }>(
-            // visited=eq.true: a bucket-list row's note is never exposed, and this
-            // row also gates the places below.
-            `user_city?user_id=eq.${userId}&city_id=eq.${cityId}&visited=eq.true&select=notes&limit=1`,
-          )
-        : none,
-      validUser
-        ? rest<{
-            liked: boolean | null;
-            category: string | null;
-            places: {
-              id: number;
-              name: string | null;
-              category: string | null;
-              latitude: number | null;
-              longitude: number | null;
-            } | null;
-          }>(
-            // bucket_list=false: private bucket-list places are excluded
-            // anywhere another user's places are shown (same rule as iOS).
-            // liked=false is an explicit dislike, which doesn't belong in a
-            // guide of places to try; liked=null is visited without a rating.
-            // `note` is deliberately not selected.
-            `user_place?user_id=eq.${userId}&bucket_list=eq.false&or=(liked.is.null,liked.eq.true)&select=liked,category,places!inner(id,name,category,latitude,longitude,city_id)&places.city_id=eq.${cityId}`,
-          )
-        : none,
-    ]);
+  const [cityRows, photoRows, guide] = await Promise.all([
+    rest<{
+      display_name: string;
+      admin: string | null;
+      country: string | null;
+      latitude: number | null;
+      longitude: number | null;
+    }>(
+      `cities?id=eq.${cityId}&select=display_name,admin,country,latitude,longitude&limit=1`,
+    ),
+    rest<{
+      photo_url_regular: string | null;
+      photographer_name: string | null;
+      unsplash_url: string | null;
+    }>(
+      `city_photos?city_id=eq.${cityId}&select=photo_url_regular,photographer_name,unsplash_url&limit=1`,
+    ),
+    // Per-user data comes only through get_shared_guide: anon can't read
+    // user_city, user_place, or profiles. The function already drops
+    // bucket-list rows, disliked places, place notes, and every place when
+    // the city isn't visited.
+    validUser
+      ? rpcGet<GuideRow>("get_shared_guide", { p_user_id: userId, p_city_id: cityId })
+      : Promise.resolve(null),
+  ]);
 
   const city = cityRows?.[0];
   if (!city) return null;
@@ -131,35 +116,29 @@ export async function getSharedTrip(
       }
     : null;
 
-  const profile = profileRows?.[0];
+  const profile = guide?.sharer ?? null;
   const fullName = profile?.full_name?.trim() || null;
   const username = profile?.username?.trim() || null;
   const sharer = profile
     ? {
         fullName,
         username,
-        // avatar_url is a path in a private bucket; the avatar route serves it.
-        avatarUrl: profile.avatar_url ? `/api/avatar/${userId}` : null,
+        // The avatar is a path in a private bucket; the avatar route serves it.
+        avatarUrl: profile.has_avatar ? `/api/avatar/${userId}` : null,
       }
     : null;
   const sharerName = fullName || (username ? `@${username}` : null);
 
-  // A guide exists only for a city the sharer has visited. Without the visited
-  // row, the city is bucket-listed or absent, so nothing personal is shown.
-  const visitedRow = noteRows?.[0];
-  const tripNote = visitedRow?.notes?.trim() || null;
+  const tripNote = guide?.trip_note?.trim() || null;
 
   const guidePlaces: GuidePlace[] = [];
-  for (const row of visitedRow ? (placeRows ?? []) : []) {
-    const p = row.places;
-    if (!p || !p.name?.trim() || !isNum(p.latitude) || !isNum(p.longitude)) {
-      continue;
-    }
+  for (const p of Array.isArray(guide?.places) ? guide.places : []) {
+    if (!p?.name?.trim() || !isNum(p.latitude) || !isNum(p.longitude)) continue;
     guidePlaces.push({
       id: p.id,
       name: p.name.trim(),
-      category: normalizeCategory(row.category ?? p.category),
-      liked: row.liked === true,
+      category: normalizeCategory(p.category),
+      liked: p.liked === true,
       latitude: p.latitude,
       longitude: p.longitude,
     });
