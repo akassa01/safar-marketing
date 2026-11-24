@@ -92,7 +92,8 @@ export async function getSharedTrip(
         : none,
       validUser
         ? rest<{ notes: string | null }>(
-            // visited=eq.true: a bucket-list row's note is never exposed.
+            // visited=eq.true: a bucket-list row's note is never exposed, and this
+            // row also gates the places below.
             `user_city?user_id=eq.${userId}&city_id=eq.${cityId}&visited=eq.true&select=notes&limit=1`,
           )
         : none,
@@ -110,8 +111,10 @@ export async function getSharedTrip(
           }>(
             // bucket_list=false: private bucket-list places are excluded
             // anywhere another user's places are shown (same rule as iOS).
+            // liked=false is an explicit dislike, which doesn't belong in a
+            // guide of places to try; liked=null is visited without a rating.
             // `note` is deliberately not selected.
-            `user_place?user_id=eq.${userId}&bucket_list=eq.false&select=liked,category,places!inner(id,name,category,latitude,longitude,city_id)&places.city_id=eq.${cityId}`,
+            `user_place?user_id=eq.${userId}&bucket_list=eq.false&or=(liked.is.null,liked.eq.true)&select=liked,category,places!inner(id,name,category,latitude,longitude,city_id)&places.city_id=eq.${cityId}`,
           )
         : none,
     ]);
@@ -141,10 +144,13 @@ export async function getSharedTrip(
     : null;
   const sharerName = fullName || (username ? `@${username}` : null);
 
-  const tripNote = noteRows?.[0]?.notes?.trim() || null;
+  // A guide exists only for a city the sharer has visited. Without the visited
+  // row, the city is bucket-listed or absent, so nothing personal is shown.
+  const visitedRow = noteRows?.[0];
+  const tripNote = visitedRow?.notes?.trim() || null;
 
   const guidePlaces: GuidePlace[] = [];
-  for (const row of placeRows ?? []) {
+  for (const row of visitedRow ? (placeRows ?? []) : []) {
     const p = row.places;
     if (!p || !p.name?.trim() || !isNum(p.latitude) || !isNum(p.longitude)) {
       continue;

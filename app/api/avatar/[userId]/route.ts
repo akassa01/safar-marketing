@@ -62,7 +62,8 @@ export async function GET(
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
       // Storage redirects would bypass the host check above.
       redirect: "error",
-      next: { revalidate: 3600 },
+      // A removed or replaced avatar should stop showing within minutes, not a day.
+      next: { revalidate: 300 },
     });
     const type = (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
     if (!res.ok || !ALLOWED_TYPES.has(type)) return notFound();
@@ -71,7 +72,7 @@ export async function GET(
         "content-type": type,
         "x-content-type-options": "nosniff",
         "content-security-policy": "default-src 'none'; sandbox",
-        "cache-control": "public, max-age=3600, s-maxage=86400",
+        "cache-control": "public, max-age=300, s-maxage=300, stale-while-revalidate=60",
       },
     });
   } catch {
