@@ -16,6 +16,20 @@ export const CATEGORY_TITLES: Record<CategoryKey, string> = {
   other: "Other",
 };
 
+/**
+ * Category colors, matching iOS `PlaceCategory.systemColor` (Place.swift). The
+ * values are Apple's light-mode system colors, so a pin or swatch here is the
+ * same color the app draws for that category.
+ */
+export const CATEGORY_COLORS: Record<CategoryKey, string> = {
+  restaurant: "#FF9500", // systemOrange
+  hotel: "#AF52DE", // systemPurple
+  activity: "#34C759", // systemGreen
+  shop: "#FFCC00", // systemYellow
+  nightlife: "#FF2D55", // systemPink
+  other: "#007AFF", // systemBlue
+};
+
 /** Display order for grouped lists. */
 export const CATEGORY_ORDER: CategoryKey[] = [
   "restaurant",

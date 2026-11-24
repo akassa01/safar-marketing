@@ -1,10 +1,16 @@
 import { parseId, rest } from "@/lib/supabaseRest";
-import { CATEGORY_TITLES, normalizeCategory } from "@/lib/placeCategories";
+import {
+  CATEGORY_TITLES,
+  normalizeCategory,
+  type CategoryKey,
+} from "@/lib/placeCategories";
 
 export interface SharedPlace {
   name: string;
   /** Category title such as "Food & Drink", or null when unknown. */
   category: string | null;
+  /** Category key for color, or null when unknown (the fallback link has none). */
+  categoryKey: CategoryKey | null;
   latitude: number;
   longitude: number;
   /** "City, Country" when known. */
@@ -43,6 +49,7 @@ export async function getCatalogPlace(
   return {
     name,
     category: CATEGORY_TITLES[normalizeCategory(row.category)],
+    categoryKey: normalizeCategory(row.category),
     latitude: row.latitude,
     longitude: row.longitude,
     cityLabel,
@@ -65,5 +72,5 @@ export function placeFromQuery(q: {
   const latitude = Number(lat);
   const longitude = Number(lng);
   if (!isCoord(latitude, 90) || !isCoord(longitude, 180)) return null;
-  return { name, category: null, latitude, longitude, cityLabel: null };
+  return { name, category: null, categoryKey: null, latitude, longitude, cityLabel: null };
 }

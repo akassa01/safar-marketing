@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import GuideMap from "@/components/GuideMap";
 import {
+  CATEGORY_COLORS,
   CATEGORY_ORDER,
   CATEGORY_TITLES,
   type CategoryKey,
@@ -57,12 +58,19 @@ export default function GuidePlaces({ places, center, cityLabel }: Props) {
           name: p.name,
           lat: p.latitude,
           lng: p.longitude,
+          color: CATEGORY_COLORS[p.category],
         }))}
       />
 
       {groups.map((group) => (
         <section key={group.key} className="mt-10">
-          <h2 className="font-headline text-2xl font-extrabold uppercase tracking-tight">
+          <h2 className="flex items-center gap-2.5 font-headline text-2xl font-extrabold uppercase tracking-tight">
+            {/* The same dot as this category's pins, so the list keys the map. */}
+            <span
+              aria-hidden
+              className="size-3 shrink-0 rounded-full ring-2 ring-white"
+              style={{ backgroundColor: CATEGORY_COLORS[group.key] }}
+            />
             {CATEGORY_TITLES[group.key]}{" "}
             <span className="text-muted">{group.items.length}</span>
           </h2>
@@ -87,7 +95,8 @@ export default function GuidePlaces({ places, center, cityLabel }: Props) {
                   href={mapsUrl(p)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0 text-sm text-muted underline underline-offset-2 hover:text-dark"
+                  aria-label={`Open ${p.name} in Apple Maps`}
+                  className="shrink-0 rounded-full border border-dark/20 px-3 py-1 text-xs font-medium transition-colors hover:bg-dark hover:text-background"
                 >
                   Apple Maps
                 </a>

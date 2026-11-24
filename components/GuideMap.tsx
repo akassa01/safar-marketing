@@ -8,6 +8,8 @@ export interface GuidePin {
   name: string;
   lat: number;
   lng: number;
+  /** Dot fill. Places pass their category color; defaults to the brand sage. */
+  color?: string;
 }
 
 interface GuideMapProps {
@@ -22,6 +24,25 @@ interface GuideMapProps {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const SAGE = "#76846F";
+/** Matches the app's place marker: a 10pt category-colored dot with a 2pt white ring. */
+const DOT_SIZE = 10;
+const SELECTED_SCALE = 1.6;
+
+function dotElement(color: string): HTMLDivElement {
+  const dot = document.createElement("div");
+  Object.assign(dot.style, {
+    width: `${DOT_SIZE}px`,
+    height: `${DOT_SIZE}px`,
+    boxSizing: "content-box",
+    borderRadius: "9999px",
+    backgroundColor: color,
+    border: "2px solid #fff",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+    cursor: "pointer",
+    transition: "transform 150ms ease-out",
+  });
+  return dot;
+}
 
 function Fallback({ cityLabel, className }: { cityLabel: string; className: string }) {
   return (
@@ -78,20 +99,26 @@ export default function GuideMap({
 
         const list = JSON.parse(pinsKey) as GuidePin[];
         const items = list.map((pin) => {
-          const annotation = new mapkit.MarkerAnnotation(
+          const dot = dotElement(pin.color ?? SAGE);
+          // The app draws plain dots, not balloon markers. The name shows in the
+          // callout when a dot is selected, so a city of pins doesn't overlap.
+          const annotation = new mapkit.Annotation(
             new mapkit.Coordinate(pin.lat, pin.lng),
+            () => dot,
             {
               title: pin.name,
-              color: SAGE,
-              glyphText: "",
-              // A city's worth of always-on labels overlaps into noise. The name
-              // shows when a pin is selected.
-              titleVisibility: list.length > 1 ? mapkit.FeatureVisibility.Hidden : mapkit.FeatureVisibility.Adaptive,
+              // Centre the dot (ring included) on the coordinate, not its bottom edge.
+              anchorOffset: new DOMPoint(0, DOT_SIZE / 2 + 2),
+              calloutOffset: new DOMPoint(0, -(DOT_SIZE / 2 + 2)),
             },
           );
-          annotation.addEventListener("select", () =>
-            onSelectRef.current?.(pin.id),
-          );
+          annotation.addEventListener("select", () => {
+            dot.style.transform = `scale(${SELECTED_SCALE})`;
+            onSelectRef.current?.(pin.id);
+          });
+          annotation.addEventListener("deselect", () => {
+            dot.style.transform = "";
+          });
           annotations.set(pin.id, annotation);
           return annotation;
         });
