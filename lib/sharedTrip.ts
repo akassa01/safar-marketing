@@ -4,8 +4,9 @@
  *
  * Catalog data (city, photo) is read directly. Everything about the sharer
  * comes from the `get_shared_guide` function, which returns only what this
- * page shows. Per-place notes are private and never leave the database; only
- * the trip note on a visited city is public.
+ * page shows: the trip note on a visited city, but not per-place notes. Place
+ * notes aren't secret (the app shows them on feed posts to signed-in users),
+ * but the guide is public and leaves them out.
  *
  * Every helper degrades to `null` or empty on failure so callers can render
  * a valid branded fallback.
