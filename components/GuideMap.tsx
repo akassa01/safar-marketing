@@ -80,7 +80,14 @@ export default function GuideMap({
         const items = list.map((pin) => {
           const annotation = new mapkit.MarkerAnnotation(
             new mapkit.Coordinate(pin.lat, pin.lng),
-            { title: pin.name, color: SAGE, glyphText: "" },
+            {
+              title: pin.name,
+              color: SAGE,
+              glyphText: "",
+              // A city's worth of always-on labels overlaps into noise. The name
+              // shows when a pin is selected.
+              titleVisibility: list.length > 1 ? mapkit.FeatureVisibility.Hidden : mapkit.FeatureVisibility.Adaptive,
+            },
           );
           annotation.addEventListener("select", () =>
             onSelectRef.current?.(pin.id),
