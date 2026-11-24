@@ -25,8 +25,9 @@ export interface SharedTrip {
   cityName: string;
   admin: string | null;
   country: string;
-  latitude: number;
-  longitude: number;
+  /** City centre. `cities.latitude`/`longitude` are nullable, so either can be null. */
+  latitude: number | null;
+  longitude: number | null;
   photo: {
     url: string;
     photographer: string | null;
@@ -68,8 +69,8 @@ export async function getSharedTrip(
         display_name: string;
         admin: string | null;
         country: string | null;
-        latitude: number;
-        longitude: number;
+        latitude: number | null;
+        longitude: number | null;
       }>(
         `cities?id=eq.${cityId}&select=display_name,admin,country,latitude,longitude&limit=1`,
       ),
@@ -162,8 +163,9 @@ export async function getSharedTrip(
     cityName: city.display_name,
     admin: city.admin?.trim() || null,
     country: city.country ?? "",
-    latitude: city.latitude,
-    longitude: city.longitude,
+    // Keep the pair together: one valid half of a coordinate is no coordinate.
+    latitude: isNum(city.latitude) && isNum(city.longitude) ? city.latitude : null,
+    longitude: isNum(city.latitude) && isNum(city.longitude) ? city.longitude : null,
     photo,
     sharerName,
     sharer,

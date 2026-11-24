@@ -25,7 +25,7 @@ export default async function OgImage({
 
   const coordinates = trip?.places.length
     ? trip.places
-    : trip
+    : trip && trip.latitude !== null && trip.longitude !== null
       ? [{ latitude: trip.latitude, longitude: trip.longitude }]
       : [];
 

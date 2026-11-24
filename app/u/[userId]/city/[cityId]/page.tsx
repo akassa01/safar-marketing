@@ -71,7 +71,11 @@ export default async function SharedCityPage({ params }: { params: Params }) {
         <GuideHeader trip={trip} />
         <GuidePlaces
           places={trip.guidePlaces}
-          center={{ lat: trip.latitude, lng: trip.longitude }}
+          center={
+            trip.latitude !== null && trip.longitude !== null
+              ? { lat: trip.latitude, lng: trip.longitude }
+              : null
+          }
           cityLabel={cityLabel}
         />
         <GuideCta />

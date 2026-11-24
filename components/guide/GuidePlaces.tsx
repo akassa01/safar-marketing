@@ -11,7 +11,8 @@ import type { GuidePlace } from "@/lib/sharedTrip";
 
 interface Props {
   places: GuidePlace[];
-  center: { lat: number; lng: number };
+  /** City centre, or null when the city has no coordinates. */
+  center: { lat: number; lng: number } | null;
   cityLabel: string;
 }
 
@@ -47,7 +48,7 @@ export default function GuidePlaces({ places, center, cityLabel }: Props) {
     <>
       <GuideMap
         className="mt-10"
-        center={center}
+        center={center ?? { lat: places[0].latitude, lng: places[0].longitude }}
         cityLabel={cityLabel}
         selectedId={selectedId}
         onSelect={select}
