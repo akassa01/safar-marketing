@@ -40,6 +40,18 @@ const ERRORS: Record<string, string> = {
 const inputClass =
   "w-full rounded-xl border border-dark/15 bg-white px-4 py-3 text-base text-dark placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30";
 
+/** Within about 80 km of the city centre. True when the city has no coordinates. */
+function nearCity(pLat: number, pLng: number, lat?: number, lng?: number): boolean {
+  if (lat === undefined || lng === undefined) return true;
+  const rad = Math.PI / 180;
+  const dLat = (pLat - lat) * rad;
+  const dLng = (pLng - lng) * rad;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat * rad) * Math.cos(pLat * rad) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(a)) <= 80;
+}
+
 export default function AskForm({ token, requesterName, cityName, center }: Props) {
   const listId = useId();
   const [name, setName] = useState("");
@@ -81,6 +93,9 @@ export default function AskForm({ token, requesterName, cityName, center }: Prop
             new mapkit.CoordinateSpan(0.3, 0.3),
           );
         }
+        // Keep results inside the city's region, not merely ranked by it.
+        const required = mapkit.Search?.RegionPriority?.Required;
+        if (options.region && required) options.regionPriority = required;
         mapkitRef.current = mapkit;
         searchRef.current = new mapkit.Search(options);
       } catch {
@@ -106,7 +121,11 @@ export default function AskForm({ token, requesterName, cityName, center }: Prop
       try {
         search.autocomplete(query, (err: unknown, data: any) => {
           if (err || mine !== seq.current) return;
-          const results = (data?.results ?? []).slice(0, 5) as any[];
+          // Places only (query rows like "Search Nearby" carry no coordinate), and
+          // only ones in this city, so a same-name branch elsewhere can't be picked.
+          const results = ((data?.results ?? []) as any[])
+            .filter((r) => r.coordinate && nearCity(r.coordinate.latitude, r.coordinate.longitude, lat, lng))
+            .slice(0, 5);
           setSuggestions(
             results.map((r) => ({
               title: r.displayLines?.[0] ?? "",
@@ -121,7 +140,7 @@ export default function AskForm({ token, requesterName, cityName, center }: Prop
       }
     }, 200);
     return () => clearTimeout(timer);
-  }, [place, picked]);
+  }, [place, picked, lat, lng]);
 
   function onPlaceChange(value: string) {
     setPlace(value);
@@ -139,6 +158,7 @@ export default function AskForm({ token, requesterName, cityName, center }: Prop
       search.search(s.raw, (err: unknown, data: any) => {
         const found = data?.places?.[0];
         if (err || !found?.coordinate) return;
+        if (!nearCity(found.coordinate.latitude, found.coordinate.longitude, lat, lng)) return;
         setPicked({
           latitude: found.coordinate.latitude,
           longitude: found.coordinate.longitude,
