@@ -1,85 +1,85 @@
-import Image from "next/image";
-import Link from "next/link";
 import type { Metadata } from "next";
-import { getSharedTrip } from "@/lib/sharedTrip";
-import { APP_STORE_URL } from "@/lib/appStore";
+import { getSharedTrip, type SharedTrip } from "@/lib/sharedTrip";
+import GuideNav from "@/components/guide/GuideNav";
+import GuideHeader from "@/components/guide/GuideHeader";
+import GuidePlaces from "@/components/guide/GuidePlaces";
+import GuideCta from "@/components/guide/GuideCta";
+import GuideUnavailable from "@/components/guide/GuideUnavailable";
 
-// Per-city OG title/description so link unfurls match the generated image.
-// The sibling `opengraph-image.tsx` route supplies the picture; this only sets
-// text. Both degrade to the same generic Safar copy when data is unavailable —
-// never an error.
+type Params = Promise<{ userId: string; cityId: string }>;
+
+// Never throws: any data failure resolves to null and renders the fallback.
+async function load(params: Params): Promise<SharedTrip | null> {
+  try {
+    const { userId, cityId } = await params;
+    return await getSharedTrip(userId, cityId);
+  } catch {
+    return null;
+  }
+}
+
+// The sibling `opengraph-image.tsx` route supplies the picture; this sets the
+// text. Both degrade to generic Safar copy when data is unavailable.
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ userId: string; cityId: string }>;
+  params: Params;
 }): Promise<Metadata> {
-  const { userId, cityId } = await params;
-
-  let trip = null;
-  try {
-    trip = await getSharedTrip(userId, cityId);
-  } catch {
-    trip = null;
-  }
+  const trip = await load(params);
+  const robots = { index: false, follow: false };
 
   if (!trip) {
-    return {
-      title: "A trip on Safar",
-      description:
-        "See this city and the places worth visiting on Safar — the social travel journal.",
-    };
+    const title = "A guide on Safar";
+    const description =
+      "Keep track of the cities you have visited and the places you loved.";
+    return { title, description, robots, openGraph: { title, description } };
   }
 
-  const place = [trip.cityName, trip.country].filter(Boolean).join(", ");
-  const title = trip.sharerName
-    ? `See ${trip.sharerName}'s trip to ${trip.cityName} on Safar`
-    : `See ${trip.cityName} on Safar`;
-  const description = trip.sharerName
-    ? `${trip.sharerName} shared their trip to ${place} on Safar — the social travel journal. Get the app to see the places they loved.`
-    : `Explore ${place} on Safar — the social travel journal. Get the app to see the places worth visiting.`;
+  const first = trip.sharer?.fullName?.split(/\s+/)[0];
+  const who = first ?? (trip.sharer?.username ? `@${trip.sharer.username}` : null);
+  const title = who
+    ? `${who}'s guide to ${trip.cityName}`
+    : `A guide to ${trip.cityName}`;
+  const count = trip.guidePlaces.length;
+  const description =
+    count > 0
+      ? `${count} ${count === 1 ? "place" : "places"} to try in ${trip.cityName}, saved on Safar.`
+      : `A guide to ${trip.cityName} on Safar.`;
 
   return {
     title,
     description,
+    robots,
     openGraph: { title, description },
     twitter: { card: "summary_large_image", title, description },
   };
 }
 
-// Fallback landing page for shared-city links. Users with the Safar app installed
-// never reach this — iOS opens the app via the Universal Link (see the AASA file at
-// /.well-known/apple-app-site-association). Everyone else lands here and is pointed
-// to the App Store.
-export default async function SharedCityPage({
-  params,
-}: {
-  params: Promise<{ userId: string; cityId: string }>;
-}) {
-  // params is awaited to satisfy Next's async dynamic API contract even though the
-  // v1 page is generic; the ids are available here if we later personalize it.
-  await params;
+// Web guide for shared-city links. Users with the Safar app installed never
+// reach this: iOS opens the app via the Universal Link (see the AASA file at
+// /.well-known/apple-app-site-association). Everyone else reads the guide here.
+export default async function SharedCityPage({ params }: { params: Params }) {
+  const trip = await load(params);
+  if (!trip) return <GuideUnavailable />;
+
+  const cityLabel = [trip.cityName, trip.country].filter(Boolean).join(", ");
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-8 px-6 text-center bg-background text-dark">
-      <Image src="/logo.png" alt="Safar" width={96} height={96} className="rounded-2xl" priority />
-
-      <div className="flex flex-col gap-3 max-w-md">
-        <h1 className="font-headline text-4xl font-extrabold uppercase tracking-tight">
-          A trip worth taking
-        </h1>
-        <p className="text-muted text-lg">
-          Someone shared a city with you on Safar. Get the app to see their trip, the
-          places they loved, and track your own travels.
-        </p>
-      </div>
-
-      <Link href={APP_STORE_URL} aria-label="Download Safar on the App Store">
-        <Image src="/app-store-badge.svg" alt="Download on the App Store" width={180} height={60} priority />
-      </Link>
-
-      <Link href="/" className="text-accent text-sm underline underline-offset-4">
-        Learn more about Safar
-      </Link>
-    </main>
+    <div className="min-h-screen bg-background text-dark">
+      <GuideNav />
+      <main className="mx-auto max-w-[680px] px-4 pb-16 pt-2">
+        <GuideHeader trip={trip} />
+        <GuidePlaces
+          places={trip.guidePlaces}
+          center={
+            trip.latitude !== null && trip.longitude !== null
+              ? { lat: trip.latitude, lng: trip.longitude }
+              : null
+          }
+          cityLabel={cityLabel}
+        />
+        <GuideCta />
+      </main>
+    </div>
   );
 }

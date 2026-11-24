@@ -4,11 +4,11 @@ import { getSharedTrip } from "@/lib/sharedTrip";
 
 export const size = OG_SIZE;
 export const contentType = "image/png";
-export const alt = "A trip on Safar";
+export const alt = "A city guide on Safar";
 
 // Per-city social-preview image for shared links. Always returns a valid
 // branded PNG: on any data-fetch failure it degrades to a city-only, then a
-// fully generic Safar card — never a 500.
+// fully generic Safar card, never a 500.
 export default async function OgImage({
   params,
 }: {
@@ -25,7 +25,7 @@ export default async function OgImage({
 
   const coordinates = trip?.places.length
     ? trip.places
-    : trip
+    : trip && trip.latitude !== null && trip.longitude !== null
       ? [{ latitude: trip.latitude, longitude: trip.longitude }]
       : [];
 
@@ -33,8 +33,8 @@ export default async function OgImage({
     ? [trip.cityName, trip.country].filter(Boolean).join(", ")
     : "Safar";
   const leadIn = trip?.sharerName
-    ? `${trip.sharerName}'s trip to`
-    : "A trip to";
+    ? `${trip.sharerName}'s guide to`
+    : "A guide to";
 
   return new ImageResponse(
     (
@@ -56,7 +56,7 @@ export default async function OgImage({
               display: "flex",
             }}
           >
-            {trip ? leadIn : "The social travel journal"}
+            {trip ? leadIn : "Places worth returning to"}
           </div>
           <div style={{ fontSize: 72, fontWeight: 800, display: "flex" }}>
             {cityLine}
