@@ -1,3 +1,4 @@
+import { CATEGORY_COLORS } from "@/lib/placeCategories";
 import Image from "next/image";
 import Link from "next/link";
 import GuideMap from "@/components/GuideMap";
@@ -54,7 +55,14 @@ export default function PlaceCard({ place }: { place: SharedPlace | null }) {
 
       <main className="mx-auto max-w-[680px] px-4 pb-16 pt-4">
         {place.category && (
-          <span className="inline-block rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent">
+            {place.categoryKey && (
+              <span
+                aria-hidden
+                className="size-2 rounded-full"
+                style={{ backgroundColor: CATEGORY_COLORS[place.categoryKey] }}
+              />
+            )}
             {place.category}
           </span>
         )}
@@ -66,7 +74,15 @@ export default function PlaceCard({ place }: { place: SharedPlace | null }) {
         <GuideMap
           className="mt-6"
           center={{ lat: place.latitude, lng: place.longitude }}
-          pins={[{ id: 1, name: place.name, lat: place.latitude, lng: place.longitude }]}
+          pins={[
+            {
+              id: 1,
+              name: place.name,
+              lat: place.latitude,
+              lng: place.longitude,
+              color: place.categoryKey ? CATEGORY_COLORS[place.categoryKey] : undefined,
+            },
+          ]}
           cityLabel={place.cityLabel ?? place.name}
         />
 
