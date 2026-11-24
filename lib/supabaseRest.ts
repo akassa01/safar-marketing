@@ -1,8 +1,10 @@
 /**
- * Minimal anon PostgREST helper for public, read-only data.
+ * Minimal anon PostgREST helper.
  *
- * Uses the same public URL and anon key that ship in the iOS app (RLS scopes
- * anon reads to public content). They are hardcoded so pages work on Vercel
+ * Uses the same public URL and anon key that ship in the iOS app. Anon can read
+ * catalog tables directly, but per-user tables (user_city, user_place, profiles,
+ * follows, likes, comments) are revoked from anon: read them only through a
+ * SECURITY DEFINER function that returns what the page shows (`rpcGet`). They are hardcoded so pages work on Vercel
  * with no env setup and never fail on a missing variable. Never use the
  * service-role key here.
  *
@@ -24,9 +26,8 @@ export function parseId(raw: string): number | null {
   return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
-export async function rest<T = Record<string, unknown>>(
-  query: string,
-): Promise<T[] | null> {
+/** Cached GET of a PostgREST path. Returns the parsed body, or null on any failure. */
+async function cachedGet(query: string): Promise<unknown> {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${query}`, {
       headers: {
@@ -37,10 +38,34 @@ export async function rest<T = Record<string, unknown>>(
       next: { revalidate: 3600 },
     });
     if (!res.ok) return null;
-    return (await res.json()) as T[];
+    return await res.json();
   } catch {
     return null;
   }
+}
+
+/** Reads catalog rows (cities, places, photos). Anon can't read per-user tables. */
+export async function rest<T = Record<string, unknown>>(
+  query: string,
+): Promise<T[] | null> {
+  const body = await cachedGet(query);
+  return Array.isArray(body) ? (body as T[]) : null;
+}
+
+/**
+ * Calls a read-only (`STABLE`) Postgres function over GET so the response is
+ * cached like `rest`. Use it for per-user public data, which anon can only reach
+ * through a function that returns exactly what the page shows.
+ */
+export async function rpcGet<T>(
+  name: string,
+  params: Record<string, string | number>,
+): Promise<T | null> {
+  const query = new URLSearchParams(
+    Object.entries(params).map(([k, v]) => [k, String(v)]),
+  );
+  const body = await cachedGet(`rpc/${name}?${query}`);
+  return body === null || body === undefined ? null : (body as T);
 }
 
 export type RpcResult<T> =
