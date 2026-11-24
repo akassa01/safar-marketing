@@ -14,8 +14,16 @@ function reply(body: Record<string, unknown>, status: number) {
   return NextResponse.json(body, { status, headers: NO_STORE });
 }
 
+/**
+ * Cuts to `max` characters by code point, which is how Postgres `char_length` counts.
+ * A UTF-16 `.slice` can split an emoji and leave a lone surrogate, which the RPC rejects.
+ */
+function clip(value: string, max: number): string {
+  return Array.from(value).slice(0, max).join("");
+}
+
 function text(value: unknown, max: number): string {
-  return typeof value === "string" ? value.replace(/\s+/g, " ").trim().slice(0, max) : "";
+  return typeof value === "string" ? clip(value.replace(/\s+/g, " ").trim(), max) : "";
 }
 
 function coord(value: unknown, limit: number): number | null {
@@ -56,7 +64,7 @@ export async function POST(request: Request, { params }: { params: Params }) {
   const placeName = text(body.placeName, 120);
   if (!senderName || !placeName) return reply({ error: "invalid" }, 400);
 
-  const note = typeof body.note === "string" ? body.note.trim().slice(0, 240) : "";
+  const note = typeof body.note === "string" ? clip(body.note.trim(), 240) : "";
   const mapKitId = text(body.mapKitId, 200);
   let latitude = coord(body.latitude, 90);
   let longitude = coord(body.longitude, 180);

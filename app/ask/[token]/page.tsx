@@ -3,17 +3,17 @@ import Image from "next/image";
 import Link from "next/link";
 import GuideNav from "@/components/guide/GuideNav";
 import AskForm from "@/components/ask/AskForm";
-import { getAskRequest, type AskRequest } from "@/lib/askRequest";
+import { getAskRequest, type AskLookup } from "@/lib/askRequest";
 
 type Params = Promise<{ token: string }>;
 
-// Never throws: any failure resolves to null and renders the closed card.
-async function load(params: Params): Promise<AskRequest | null> {
+// Never throws: an unexpected failure resolves to `error`, not `closed`.
+async function load(params: Params): Promise<AskLookup> {
   try {
     const { token } = await params;
     return await getAskRequest(token);
   } catch {
-    return null;
+    return { status: "error" };
   }
 }
 
@@ -22,19 +22,20 @@ export async function generateMetadata({
 }: {
   params: Params;
 }): Promise<Metadata> {
-  const ask = await load(params);
+  const lookup = await load(params);
   const robots = { index: false, follow: false };
-  if (!ask) {
+  if (lookup.status !== "open") {
     const title = "Ask friends on Safar";
     const description = "Friends share the places they love in a city.";
     return { title, description, robots, openGraph: { title, description } };
   }
+  const { ask } = lookup;
   const title = `Help ${ask.requesterName} plan ${ask.cityName} on Safar`;
   const description = `Share a place you love in ${ask.cityName}. It takes under a minute.`;
   return { title, description, robots, openGraph: { title, description } };
 }
 
-function Closed() {
+function Notice({ title, body }: { title: string; body: string }) {
   return (
     <div className="min-h-screen bg-background text-dark">
       <GuideNav />
@@ -42,9 +43,9 @@ function Closed() {
         <Image src="/logo.png" alt="Safar" width={64} height={64} className="rounded-2xl" />
         <div className="flex flex-col gap-2">
           <h1 className="font-headline text-4xl font-extrabold uppercase tracking-tight">
-            This link is no longer open
+            {title}
           </h1>
-          <p className="text-muted">Ask your friend to send you a new one.</p>
+          <p className="text-muted">{body}</p>
         </div>
         <Link href="/" className="text-sm text-accent underline underline-offset-4">
           Learn more about Safar
@@ -55,8 +56,24 @@ function Closed() {
 }
 
 export default async function AskPage({ params }: { params: Params }) {
-  const ask = await load(params);
-  if (!ask) return <Closed />;
+  const lookup = await load(params);
+  if (lookup.status === "closed") {
+    return (
+      <Notice
+        title="This link is no longer open"
+        body="Ask your friend to send you a new one."
+      />
+    );
+  }
+  if (lookup.status === "error") {
+    return (
+      <Notice
+        title="Couldn't load this page"
+        body="Something went wrong on our end. Refresh in a moment to try again."
+      />
+    );
+  }
+  const { ask } = lookup;
   const { token } = await params;
   const region = [ask.cityName, ask.country].filter(Boolean).join(", ");
 

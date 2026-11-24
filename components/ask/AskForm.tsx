@@ -66,7 +66,9 @@ export default function AskForm({ token, requesterName, cityName, center }: Prop
   const [error, setError] = useState<string | null>(null);
 
   const searchRef = useRef<any>(null);
-  const mapkitRef = useRef<any>(null);
+  // The text a pick put in the box. Autocomplete skips it, so the dropdown doesn't
+  // reopen while the picked place is still resolving (or if resolving fails).
+  const pickedText = useRef<string | null>(null);
   const seq = useRef(0);
   const placeInput = useRef<HTMLInputElement>(null);
   const lat = center?.lat;
@@ -96,7 +98,6 @@ export default function AskForm({ token, requesterName, cityName, center }: Prop
         // Keep results inside the city's region, not merely ranked by it.
         const required = mapkit.Search?.RegionPriority?.Required;
         if (options.region && required) options.regionPriority = required;
-        mapkitRef.current = mapkit;
         searchRef.current = new mapkit.Search(options);
       } catch {
         searchRef.current = null;
@@ -111,7 +112,12 @@ export default function AskForm({ token, requesterName, cityName, center }: Prop
   useEffect(() => {
     const query = place.trim();
     const mine = ++seq.current;
-    if (query.length < 2 || picked.mapKitId || picked.latitude !== null) {
+    if (
+      query.length < 2 ||
+      picked.mapKitId ||
+      picked.latitude !== null ||
+      place === pickedText.current
+    ) {
       setSuggestions([]);
       return;
     }
@@ -143,6 +149,7 @@ export default function AskForm({ token, requesterName, cityName, center }: Prop
   }, [place, picked, lat, lng]);
 
   function onPlaceChange(value: string) {
+    pickedText.current = null;
     setPlace(value);
     setPicked(EMPTY_PICK);
     setError(null);
@@ -150,6 +157,7 @@ export default function AskForm({ token, requesterName, cityName, center }: Prop
 
   function pick(s: Suggestion) {
     setSuggestions([]);
+    pickedText.current = s.title;
     setPlace(s.title);
     seq.current++;
     const search = searchRef.current;
